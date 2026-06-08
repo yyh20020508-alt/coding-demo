@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#e8e0f0">
+<meta name="format-detection" content="telephone=no">
+<title>带薪摸鱼计算器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+:root{--accent:#6366f1;--accent2:#818cf8;--gold:#d4a017;--gold2:#b8860b;--text:#1e1b4b;--text2:#4b5563;--text3:#6b7280;--red:#ef4444;--glass:rgba(255,255,255,0.55);--glass-border:rgba(255,255,255,0.6);--blur:blur(20px);--shadow:0 4px 24px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.03);--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom)}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','PingFang SC','Helvetica Neue',sans-serif;color:var(--text);background:#e8e0f0;position:relative}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(ellipse 120% 80% at 20% 10%,rgba(167,139,250,0.35),transparent),
+  radial-gradient(ellipse 100% 70% at 85% 80%,rgba(251,191,36,0.2),transparent),
+  radial-gradient(ellipse 80% 60% at 50% 50%,rgba(129,140,248,0.15),transparent)}
+input,textarea,select{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+input[type="number"]{-moz-appearance:textfield}
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.app{display:flex;flex-direction:column;height:100%;height:100dvh;max-width:500px;margin:0 auto;padding-top:var(--sat)}
+.page-wrap{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:12px 16px 20px}
+.page{display:none}.page.active{display:block}
+.tab-bar{display:flex;background:rgba(255,255,255,0.6);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-top:0.5px solid var(--glass-border);padding:4px 0;padding-bottom:max(4px,var(--sab))}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;cursor:pointer;border:none;background:none;color:var(--text3);transition:color .25s}
+.tab-item.active{color:var(--accent)}
+.tab-item svg{width:22px;height:22px;fill:currentColor}
+.tab-item span{font-size:10px;font-weight:600}
+
+/* Meme */
+.meme-top{text-align:center;padding:28px 8px 4px}
+.meme-top .mt{font-size:22px;font-weight:800;color:var(--text);line-height:1.4;letter-spacing:-.3px}
+.meme-top .ms{font-size:13px;color:var(--text2);margin-top:6px;line-height:1.5}
+
+/* Today */
+.today-summary{display:flex;gap:8px;margin:14px 0}
+.today-item{flex:1;background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:18px;padding:14px 6px;text-align:center;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.today-item .tv{font-size:22px;font-weight:800;color:var(--text);line-height:1.2}
+.today-item .tv .tu{font-size:11px;font-weight:600;color:var(--text2);margin-left:1px}
+.today-item .tl{font-size:10px;color:var(--text3);margin-top:4px;font-weight:500}
+.today-item.gold-item{border-color:rgba(251,191,36,0.3);background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(245,158,11,0.06))}
+.today-item.gold-item .tv{color:var(--gold2);font-size:20px}
+.today-item.gold-item .tl{color:var(--gold)}
+
+/* Today act stats */
+.act-stats{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:16px;border:1px solid var(--glass-border);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:14px}
+.act-stats-title{font-size:11px;color:var(--text3);font-weight:500;margin-bottom:8px}
+.act-stats-list{display:flex;flex-direction:column;gap:6px}
+.act-stat-row{display:flex;align-items:center;gap:8px}
+.act-stat-row .asr-emoji{font-size:16px;width:22px;text-align:center;flex-shrink:0}
+.act-stat-row .asr-name{font-size:13px;color:var(--text);font-weight:500;flex-shrink:0;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act-stat-row .asr-bar{flex:1;height:16px;background:rgba(99,102,241,0.06);border-radius:4px;overflow:hidden;position:relative}
+.act-stat-row .asr-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
+.act-stat-row .asr-dur{font-size:11px;color:var(--text2);font-weight:600;flex-shrink:0;width:50px;text-align:right}
+
+/* Activity chips */
+.act-section{margin-bottom:14px}
+.act-section .sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.act-section .st{font-size:12px;color:var(--text3);letter-spacing:.3px;font-weight:500}
+.edit-btn{background:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.6);color:var(--text2);font-size:11px;padding:3px 10px;border-radius:8px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-start}
+.chip{padding:7px 6px;border-radius:20px;font-size:12px;border:1px solid var(--glass-border);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--text2);cursor:pointer;transition:all .2s;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.03);flex:0 0 calc((100% - 16px)/3);text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.chip-pct{font-size:11px;opacity:.7;margin-left:2px}
+.chip.on{border-color:var(--accent2);color:var(--accent);background:rgba(99,102,241,0.1)}
+
+/* Timer */
+.timer-card{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:22px;padding:18px 16px 14px;text-align:center;border:1px solid var(--glass-border);box-shadow:0 8px 32px rgba(0,0,0,0.06);margin-bottom:10px}
+.timer-card .amt-row{display:flex;align-items:baseline;justify-content:center;gap:4px}
+.timer-card .amt{font-size:44px;font-weight:800;color:var(--text);line-height:1.1;transition:transform .1s;font-variant-numeric:tabular-nums}
+.timer-card .amt.bump{transform:scale(1.03)}
+.timer-card .amt-unit{font-size:18px;font-weight:600;color:var(--text2)}
+.timer-card .gold-live{font-size:12px;color:var(--gold2);margin-top:4px;font-weight:500}
+.timer-card .tel{font-size:20px;color:var(--text2);margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:2px;font-weight:300}
+.timer-card .albl{font-size:13px;color:var(--text3);margin-top:4px}
+.cbox{position:relative;height:24px;overflow:hidden;margin-top:2px}
+.cf{position:absolute;font-size:14px;animation:cfall 1.3s ease-in forwards;opacity:0}
+@keyframes cfall{0%{opacity:1;transform:translateY(-14px) rotate(0)}100%{opacity:0;transform:translateY(24px) rotate(360deg)}}
+
+/* Buttons */
+.btn{width:100%;padding:15px;border:none;border-radius:16px;font-size:16px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.btn:active{transform:scale(.97)}
+.btn-go{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(99,102,241,0.25)}
+.btn-end{background:linear-gradient(135deg,#ef4444,#f87171);color:#fff;box-shadow:0 4px 16px rgba(239,68,68,0.25)}
+.btn-share{background:linear-gradient(135deg,#8b5cf6,#a78bfa);color:#fff;margin-top:12px;box-shadow:0 4px 16px rgba(139,92,246,0.2)}
+
+/* Manual */
+.manual-box{margin-bottom:14px;padding:14px;background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:16px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.manual-box .mb-title{font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:500}
+.manual-row{display:flex;gap:8px;align-items:center}
+.manual-row input{width:52px;padding:8px 4px;border-radius:10px;border:1px solid rgba(0,0,0,0.05);background:rgba(255,255,255,0.6);color:var(--text);font-size:16px;text-align:center;outline:none}
+.manual-row input:focus{border-color:var(--accent)}
+.manual-row span{font-size:13px;color:var(--text3);flex-shrink:0}
+.manual-row button{margin-left:auto;padding:8px 18px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:13px;cursor:pointer;white-space:nowrap}
+
+/* Stats */
+.yr-banner{text-align:center;padding:20px 16px;background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:20px;margin-bottom:12px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.yr-banner .yrt{font-size:13px;color:var(--text3);margin-bottom:12px;font-weight:500}
+.yr-row{display:flex;justify-content:center;gap:12px 20px;flex-wrap:wrap}
+.yr-row .yi{text-align:center;min-width:50px}
+.yr-row .yv{font-size:18px;font-weight:800;color:var(--text)}
+.yr-row .yv.gold{color:var(--gold2)}
+.yr-row .yl{font-size:10px;color:var(--text3);margin-top:2px;font-weight:500}
+.gold-refresh{background:none;border:none;color:var(--accent);font-size:10px;cursor:pointer;padding:2px 4px;vertical-align:middle}
+.gold-refresh:active{opacity:.5}
+
+.cal-card{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:20px;padding:14px;margin-bottom:12px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.cal-head .ct{font-size:16px;font-weight:700}
+.cal-head button{background:none;border:none;color:var(--text2);font-size:22px;padding:4px 12px;cursor:pointer;border-radius:8px}
+.cal-head button:active{background:rgba(0,0,0,0.03)}
+.month-summary{text-align:center;padding:6px 0 4px;font-size:12px;color:var(--text2);line-height:1.8}
+.month-summary b{color:var(--accent);font-size:14px;font-weight:700}
+.month-summary .mg{color:var(--gold2)}
+.month-meme{text-align:center;padding:12px 0 6px;font-size:13px;color:var(--accent);font-weight:700;line-height:1.4}
+.cw{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:2px}
+.cw span{font-size:11px;color:var(--text3);padding:3px 0}
+.cd{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cdi{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer;position:relative;border:1.5px solid transparent;transition:all .15s;padding:4px 0;min-height:44px}
+.cdi:not(.emp):hover{background:rgba(99,102,241,0.04)}
+.cdi.tod{border-color:var(--accent);color:var(--accent);font-weight:700}
+.cdi.sel{background:rgba(99,102,241,0.1);border-color:var(--accent)}
+.cdi .cd-money{font-size:7px;font-weight:700;color:var(--gold2);white-space:nowrap;line-height:1;margin-top:1px}
+.cdi.tod .cd-money{color:var(--accent)}
+.cdi .cd-day{line-height:1.2}
+.cdi.emp{cursor:default}
+.dd-title{font-size:13px;color:var(--text2);margin-bottom:8px;padding-left:2px;font-weight:500}
+.dr{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:14px;margin-bottom:6px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.dr .di{font-size:20px}.dr .df{flex:1}.dr .dn{font-size:13px;color:var(--text);font-weight:500}.dr .dt{font-size:11px;color:var(--text3)}
+.pct-tag{font-size:10px;color:var(--accent);background:rgba(99,102,241,0.1);padding:1px 5px;border-radius:6px;font-weight:600;vertical-align:middle}
+.dr .dm{text-align:right}.dr .dm .dv{font-size:15px;font-weight:700;color:var(--text)}.dr .dm .dg{font-size:11px;color:var(--gold2)}
+.no-rec{text-align:center;padding:20px;color:var(--text3);font-size:13px}
+
+/* Profile / Settings */
+.sg{margin-bottom:20px}
+.sg-t{font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;padding-left:4px;font-weight:600}
+.sr{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:0.5px solid rgba(255,255,255,0.4)}
+.sr:first-of-type{border-radius:0}.sr:last-of-type{border-radius:0 0 16px 16px;border-bottom:none}.sr:only-of-type{border-radius:16px;border-bottom:none}
+.sg-t+.sr{border-radius:16px 16px 0 0}
+.sr label{font-size:14px;color:var(--text);font-weight:500;flex-shrink:0}
+.sr .sr-hint{font-size:11px;color:var(--accent);font-weight:600;max-width:90px;text-align:right;line-height:1.3;white-space:nowrap}
+.sr input{width:96px;text-align:right;padding:6px 10px;border-radius:10px;border:1px solid rgba(0,0,0,0.04);background:rgba(255,255,255,0.5);color:var(--text);font-size:16px;outline:none;font-weight:500}
+.sr input:focus{border-color:var(--accent)}
+.sr .right-group{display:flex;align-items:center;gap:6px}
+
+/* Achievements */
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ach{padding:10px 12px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:14px;border:1px solid var(--glass-border);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);box-shadow:var(--shadow)}
+.ach.unlocked{border-color:rgba(251,191,36,0.4);background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(245,158,11,0.06))}
+.ach .ach-icon{font-size:20px;filter:grayscale(1) opacity(0.3);flex-shrink:0}
+.ach.unlocked .ach-icon{filter:none}
+.ach .ach-info{display:flex;flex-direction:column;min-width:0}
+.ach .ach-name{font-weight:700;font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ach.unlocked .ach-name{color:var(--text)}
+.ach .ach-desc{font-size:10px;color:var(--text2);margin-top:1px;line-height:1.3}
+.ach-toggle{display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;color:var(--text3);font-size:12px;cursor:pointer;border:none;background:none;width:100%;margin-top:4px;font-weight:500}
+.ach-toggle:active{opacity:.6}
+.ach-toggle .arrow{transition:transform .25s;display:inline-block}
+.ach-toggle .arrow.open{transform:rotate(180deg)}
+.ach-locked-wrap{overflow:hidden;transition:max-height .35s ease,opacity .3s;max-height:0;opacity:0}
+.ach-locked-wrap.show{max-height:600px;opacity:1}
+.ach-locked-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+
+/* Charts */
+.chart-card{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:20px;padding:16px;margin-bottom:12px;border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.chart-card .chart-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px}
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding-top:8px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0}
+.bar-col .bar{width:100%;border-radius:4px 4px 2px 2px;min-height:0;transition:height .3s;background:linear-gradient(180deg,var(--accent2),var(--accent))}
+.bar-col .bar.empty{background:rgba(99,102,241,0.08);min-height:2px}
+.bar-col .bar-lbl{font-size:8px;color:var(--text3);white-space:nowrap}
+.bar-col .bar-val{font-size:7px;color:var(--accent);font-weight:700;white-space:nowrap}
+.hbar-list{display:flex;flex-direction:column;gap:10px}
+.hbar-item{display:flex;align-items:center;gap:8px}
+.hbar-item .hb-name{font-size:12px;color:var(--text);width:72px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-item .hb-track{flex:1;height:22px;background:rgba(99,102,241,0.06);border-radius:6px;overflow:hidden;position:relative}
+.hbar-item .hb-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.hbar-item .hb-val{font-size:11px;color:var(--text2);width:56px;text-align:right;flex-shrink:0;font-weight:600}
+.time-grid{display:flex;flex-wrap:wrap;gap:3px}
+.time-cell{width:calc(25% - 3px);aspect-ratio:2.2;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text3);position:relative}
+.time-cell .tc-lbl{font-size:8px}
+
+/* Modal */
+.ali{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:0.5px solid rgba(255,255,255,0.3)}
+.ali:first-child{border-radius:16px 16px 0 0}.ali:last-child{border-radius:0 0 16px 16px;border-bottom:none}.ali:only-child{border-radius:16px;border-bottom:none}
+.ali .ae{font-size:20px}.ali .an{flex:1;font-size:14px;color:var(--text);font-weight:500}
+.ali .ad{background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:2px 6px;opacity:.6}
+.ali .ap{width:44px;flex:none;text-align:center;padding:4px 2px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.5);font-size:16px;color:var(--accent);font-weight:600;outline:none}
+.ali .ap:focus{border-color:var(--accent)}
+.ali .ap-lock{opacity:.5;background:transparent;border-color:transparent}
+.ali .ap-s{font-size:12px;color:var(--text3);margin-left:-4px;margin-right:2px}
+.aar{display:flex;gap:8px;margin-top:10px}
+.aar input{flex:1;padding:8px 12px;border-radius:12px;border:1px solid rgba(0,0,0,0.04);background:rgba(255,255,255,0.5);color:var(--text);font-size:16px;outline:none}
+.aar input:focus{border-color:var(--accent)}
+.aar button{padding:8px 20px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.dbtn{display:block;width:100%;padding:13px;border:1px solid var(--glass-border);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--red);border-radius:16px;font-size:14px;font-weight:500;cursor:pointer}
+.dbtn:active{background:rgba(239,68,68,0.06)}
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;align-items:flex-end;justify-content:center;overscroll-behavior:contain}
+.mo.show{display:flex}
+.modal{background:rgba(255,255,255,0.85);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:24px 24px 0 0;padding:20px;padding-bottom:calc(20px + var(--sab));width:100%;max-width:500px;max-height:70vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.modal-h{font-size:17px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;color:var(--text);position:sticky;top:-20px;background:#fff;z-index:1;padding:20px 0 10px;margin:0 -20px 10px;padding-left:20px;padding-right:20px;border-radius:24px 24px 0 0}
+.modal-x{background:none;border:none;color:var(--text3);font-size:24px;cursor:pointer}
+.so{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);z-index:100;align-items:center;justify-content:center;flex-direction:column;padding:20px;padding-bottom:calc(20px + var(--sab));overscroll-behavior:contain}
+.so.show{display:flex}
+.so img{max-width:100%;max-height:70vh;border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.so .sh{color:rgba(255,255,255,0.5);font-size:13px;margin-top:12px}
+.so .sc{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:10px 30px;border-radius:12px;font-size:14px;cursor:pointer;margin-top:12px}
+.toast-ov{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:toastIn .25s}
+.toast-ov.show{display:flex}
+.toast-box{background:rgba(255,255,255,0.88);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:20px;padding:28px 24px 20px;text-align:center;max-width:300px;width:85%;box-shadow:0 16px 48px rgba(0,0,0,0.12);animation:toastPop .3s cubic-bezier(.34,1.56,.64,1)}
+.toast-box .toast-emoji{font-size:40px;margin-bottom:10px}
+.toast-box .toast-text{font-size:15px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:6px}
+.toast-box .toast-sub{font-size:12px;color:var(--text3);line-height:1.4;margin-bottom:16px}
+.toast-box .toast-btn{padding:10px 36px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.toast-box .toast-btn:active{transform:scale(.96)}
+@keyframes toastIn{from{opacity:0}to{opacity:1}}
+@keyframes toastPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+/* Welcome modal */
+.welcome-ov{display:none;position:fixed;inset:0;z-index:200;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:toastIn .25s}
+.welcome-ov.show{display:flex}
+.welcome-box{background:rgba(255,255,255,0.92);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-radius:22px;padding:28px 24px 22px;text-align:center;max-width:320px;width:88%;box-shadow:0 16px 48px rgba(0,0,0,0.12);animation:toastPop .3s cubic-bezier(.34,1.56,.64,1)}
+.welcome-box .wel-emoji{font-size:36px;margin-bottom:8px}
+.welcome-box .wel-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px}
+.welcome-box .wel-sub{font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.5}
+.welcome-box .wel-fields{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;text-align:left}
+.welcome-box .wel-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.welcome-box .wel-row label{font-size:13px;color:var(--text);font-weight:500;flex-shrink:0}
+.welcome-box .wel-row input{width:100px;padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.6);font-size:16px;color:var(--text);text-align:right;outline:none}
+.welcome-box .wel-row input:focus{border-color:var(--accent)}
+.welcome-box .wel-hint{font-size:11px;color:var(--accent);font-weight:600;margin-left:auto;margin-right:4px;white-space:nowrap}
+.welcome-box .wel-btns{display:flex;gap:10px}
+.welcome-box .wel-skip{flex:1;padding:10px;border:1px solid var(--glass-border);background:var(--glass);border-radius:12px;font-size:13px;color:var(--text3);cursor:pointer;font-weight:500}
+.welcome-box .wel-save{flex:1;padding:10px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.welcome-box .wel-skip:active,.welcome-box .wel-save:active{transform:scale(.96)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="page-wrap">
+    <!-- HOME -->
+    <div class="page active" id="pageHome">
+      <div class="meme-top">
+        <div class="mt" id="mT">今天还没开始摸鱼哦</div>
+        <div class="ms" id="mS">选个摸鱼姿势，开始你的快乐之旅</div>
+      </div>
+      <div class="today-summary">
+        <div class="today-item"><div class="tv" id="hMoney">0<span class="tu">元</span></div><div class="tl">今日金额</div></div>
+        <div class="today-item"><div class="tv" id="hTime">0<span class="tu">分</span></div><div class="tl">今日时长</div></div>
+        <div class="today-item gold-item"><div class="tv" id="hGold">0<span class="tu">g</span></div><div class="tl">今日黄金</div></div>
+      </div>
+      <div class="act-stats" id="actStats"></div>
+      <div class="act-section">
+        <div class="sh"><span class="st">选择摸鱼姿势（摸鱼有纯度，越纯越值钱）</span><button class="edit-btn" onclick="openActModal()">编辑</button></div>
+        <div class="chips" id="chipBox"></div>
+      </div>
+      <div class="timer-card" id="timerCard" style="display:none">
+        <div class="amt-row"><div class="amt" id="moneyDisp">0.00</div><div class="amt-unit">元</div></div>
+        <div class="gold-live" id="goldLive"></div>
+        <div class="tel" id="timeDisp">00:00:00</div>
+        <div class="albl" id="actLbl"></div>
+        <div class="cbox" id="coinBox"></div>
+      </div>
+      <div class="manual-box">
+        <div class="mb-title">或者直接输入摸鱼时长</div>
+        <div class="manual-row">
+          <input type="number" id="manH" placeholder="0" min="0" max="23"><span>时</span>
+          <input type="number" id="manM" placeholder="0" min="0" max="59"><span>分</span>
+          <input type="number" id="manS" placeholder="0" min="0" max="59"><span>秒</span>
+          <button onclick="addManual()">记录</button>
+        </div>
+      </div>
+      <button class="btn btn-go" id="mainBtn" onclick="toggle()">开始摸鱼</button>
+      <button class="btn btn-share" onclick="genShare()">生成分享图</button>
+    </div>
+    <!-- STATS -->
+    <div class="page" id="pageStats" style="padding-top:16px">
+      <div class="yr-banner">
+        <div class="yrt" id="yrTitle"></div>
+        <div class="yr-row" id="yrRow"></div>
+      </div>
+      <div class="cal-card">
+        <div class="month-meme" id="monthMeme"></div>
+        <div class="cal-head">
+          <button onclick="calPrev()">&#8249;</button>
+          <span class="ct" id="calTitle"></span>
+          <button onclick="calNext()">&#8250;</button>
+        </div>
+        <div class="month-summary" id="monthSum"></div>
+        <div class="cw"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+        <div class="cd" id="calDays"></div>
+      </div>
+      <div id="dayBox"></div>
+      <div id="chartsBox"></div>
+    </div>
+    <!-- PROFILE -->
+    <div class="page" id="pageProfile" style="padding-top:16px">
+      <div class="sg">
+        <div class="sg-t">薪资信息</div>
+        <div class="sr"><label>月薪（元）</label><div class="right-group"><span class="sr-hint" id="salHint"></span><input type="number" id="cfgSal" placeholder="0" oninput="saveCfg()"></div></div>
+        <div class="sr"><label>每月工作天数</label><div class="right-group"><span class="sr-hint" id="dayHint"></span><input type="number" id="cfgDays" value="22" oninput="saveCfg()"></div></div>
+        <div class="sr"><label>每天工作时长</label><div class="right-group"><span class="sr-hint" id="hrHint"></span><input type="number" id="cfgHrs" value="8" step="0.5" oninput="saveCfg()"></div></div>
+      </div>
+      <div class="sg">
+        <div class="sg-t">个人成就</div>
+        <div class="ach-grid" id="achUnlocked"></div>
+        <div id="achNoUnlock" style="text-align:center;padding:16px;color:var(--text3);font-size:13px;display:none">还没有解锁任何成就，快去摸鱼吧</div>
+        <button class="ach-toggle" id="achToggle" onclick="toggleLocked()" style="display:none">
+          <span id="achToggleText">查看未解锁</span>
+          <span class="arrow" id="achArrow">▾</span>
+        </button>
+        <div class="ach-locked-wrap" id="achLockedWrap">
+          <div class="ach-locked-grid" id="achLocked"></div>
+        </div>
+      </div>
+      <button class="dbtn" onclick="clearAll()">清除所有摸鱼记录</button>
+    </div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab-item active" onclick="go('home',this)">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>摸鱼</span>
+    </button>
+    <button class="tab-item" onclick="go('stats',this)">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>统计</span>
+    </button>
+    <button class="tab-item" onclick="go('profile',this)">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>个人</span>
+    </button>
+  </div>
+</div>
+<div class="mo" id="actMo" onclick="if(event.target===this)closeActModal()"><div class="modal">
+  <div class="modal-h">编辑摸鱼姿势 <span style="font-size:11px;color:var(--text3);font-weight:400">（百分比为有效摸鱼占比，纯度越高越值钱）</span><button class="modal-x" onclick="closeActModal()">&times;</button></div>
+  <div id="moActList"></div>
+  <div class="aar" style="margin-top:12px">
+    <input type="text" id="moE" placeholder="🐟" style="width:52px;flex:none;text-align:center">
+    <input type="text" id="moN" placeholder="名称" style="min-width:0;flex:1">
+    <input type="number" id="moP" placeholder="%" value="100" min="1" max="100" style="width:52px;flex:none;text-align:center">
+    <button onclick="addActMo()">添加</button>
+  </div>
+</div></div>
+<div class="so" id="shareOv" onclick="if(event.target===this)this.classList.remove('show')">
+  <img id="shareImg" alt="分享图"><span class="sh">长按图片保存</span><button class="sc" onclick="document.getElementById('shareOv').classList.remove('show')">关闭</button>
+</div>
+<div class="toast-ov" id="toastOv" onclick="if(event.target===this)closeToast()">
+  <div class="toast-box">
+    <div class="toast-emoji" id="toastEmoji"></div>
+    <div class="toast-text" id="toastText"></div>
+    <div class="toast-sub" id="toastSub"></div>
+    <button class="toast-btn" onclick="closeToast()">朕知道了</button>
+  </div>
+</div>
+<div class="welcome-ov" id="welcomeOv">
+  <div class="welcome-box">
+    <div class="wel-emoji">🐟</div>
+    <div class="wel-title">欢迎来到带薪摸鱼计算器</div>
+    <div class="wel-sub">填写薪资信息后，即可精准计算你的摸鱼收入</div>
+    <div class="wel-fields">
+      <div class="wel-row"><label>月薪（元）</label><span class="wel-hint" id="welSalH"></span><input type="number" id="welSal" placeholder="0" oninput="updWelHints()"></div>
+      <div class="wel-row"><label>每月工作天数</label><span class="wel-hint" id="welDayH"></span><input type="number" id="welDays" value="22" oninput="updWelHints()"></div>
+      <div class="wel-row"><label>每天工作时长</label><span class="wel-hint" id="welHrH"></span><input type="number" id="welHrs" value="8" step="0.5" oninput="updWelHints()"></div>
+    </div>
+    <div class="wel-btns">
+      <button class="wel-skip" onclick="closeWelcome()">稍后再说</button>
+      <button class="wel-save" onclick="saveWelcome()">开始摸鱼</button>
+    </div>
+  </div>
+</div>
+<canvas id="cvs" style="display:none"></canvas>
+<script>
+const RK='sf_r',CK='sf_c';
+const DEF_ACT=[
+  {emoji:'🧘',name:'灵魂出窍',pct:100},{emoji:'🚽',name:'带薪拉屎',pct:100},{emoji:'📱',name:'赛博摆烂',pct:90},
+  {emoji:'☕',name:'续命咖啡',pct:50},{emoji:'🚬',name:'肺部SPA',pct:100},{emoji:'🗣️',name:'带薪吹水',pct:70},
+  {emoji:'😴',name:'精神离职',pct:80},{emoji:'🍜',name:'战术干饭',pct:100},{emoji:'🚶',name:'工资散步',pct:90},
+  {emoji:'🎮',name:'电子搬砖',pct:100},{emoji:'🪟',name:'窗外哲学',pct:100},{emoji:'🛒',name:'摸鱼式购物',pct:100}
+];
+
+const ACHIEVEMENTS=[
+  {id:'first',icon:'🐣',name:'摸鱼新手',desc:'完成第一次摸鱼',check:r=>r.length>=1},
+  {id:'ten',icon:'🐟',name:'正式摸鱼工',desc:'累计摸鱼10次',check:r=>r.length>=10},
+  {id:'fifty',icon:'🐠',name:'资深摸鱼师',desc:'累计摸鱼50次',check:r=>r.length>=50},
+  {id:'hundred',icon:'🐋',name:'摸鱼教父',desc:'累计摸鱼100次',check:r=>r.length>=100},
+  {id:'rich1',icon:'💴',name:'第一桶金',desc:'单日摸鱼超过10元',check:r=>{const d={};r.forEach(x=>{const k=localDate(x.date);d[k]=(d[k]||0)+x.money});return Object.values(d).some(v=>v>=10)}},
+  {id:'rich2',icon:'💎',name:'摸鱼暴发户',desc:'单日摸鱼超过100元',check:r=>{const d={};r.forEach(x=>{const k=localDate(x.date);d[k]=(d[k]||0)+x.money});return Object.values(d).some(v=>v>=100)}},
+  {id:'hour1',icon:'⏰',name:'一小时起步',desc:'单次摸鱼超过1小时',check:r=>r.some(x=>x.seconds>=3600)},
+  {id:'hour3',icon:'🦥',name:'三小时大师',desc:'单次摸鱼超过3小时',check:r=>r.some(x=>x.seconds>=10800)},
+  {id:'daily5',icon:'🏅',name:'日均五次',desc:'一天内摸鱼5次以上',check:r=>{const d={};r.forEach(x=>{const k=localDate(x.date);d[k]=(d[k]||0)+1});return Object.values(d).some(v=>v>=5)}},
+  {id:'streak3',icon:'🔥',name:'三连摸',desc:'连续3天都有摸鱼',check:r=>{const ds=[...new Set(r.map(x=>localDate(x.date)))].sort();for(let i=2;i<ds.length;i++){const a=new Date(ds[i-2]),b=new Date(ds[i]);if((b-a)/(864e5)===2)return true}return false}},
+  {id:'gold1',icon:'🪙',name:'含金量很高',desc:'累计摸到1克黄金',check:r=>r.reduce((s,x)=>s+x.money,0)/980>=1},
+  {id:'alltype',icon:'🎭',name:'全能摸鱼王',desc:'使用过5种以上摸鱼姿势',check:r=>new Set(r.map(x=>x.activity)).size>=5},
+];
+
+let GOLD_PRICE=980;
+let S={running:false,start:null,ti:null,ci:null,selAct:0,calY:new Date().getFullYear(),calM:new Date().getMonth(),selDate:tds()};
+function tds(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function gc(){try{return JSON.parse(localStorage.getItem(CK))||{}}catch{return{}}}
+function sc(c){localStorage.setItem(CK,JSON.stringify(c))}
+function gr(){try{return JSON.parse(localStorage.getItem(RK))||[]}catch{return[]}}
+function sr(r){localStorage.setItem(RK,JSON.stringify(r))}
+function acts(){return gc().activities||DEF_ACT}
+// local date/time helpers — records store ISO(UTC), but all display/filter uses local time
+function localDate(iso){const d=new Date(iso);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function localYM(iso){const d=new Date(iso);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function localYear(iso){return new Date(iso).getFullYear().toString()}
+function localHour(iso){return new Date(iso).getHours()}
+function localDay(iso){return new Date(iso).getDate()}
+function hr(){const c=gc();return(parseFloat(c.salary)||0)/(parseFloat(c.workDays)||22)/(parseFloat(c.workHours)||8)}
+function goldPrice(){return gc().goldPrice||GOLD_PRICE}
+function fmtGold(money){const r=money/goldPrice();if(r>=100)return r.toFixed(1);if(r>=1)return r.toFixed(2);if(r>=0.01)return r.toFixed(3);return r.toFixed(4)}
+
+async function fetchGoldPrice(){
+  try{const r=await fetch('https://api.gold-api.com/price/XAU/CNY');if(r.ok){const d=await r.json();if(d.price)return Math.round(d.price/31.1035*100)/100}}catch{}
+  try{const r=await fetch('https://open.er-api.com/v6/latest/XAU');if(r.ok){const d=await r.json();if(d.rates?.CNY)return Math.round(d.rates.CNY/31.1035*100)/100}}catch{}
+  return null;
+}
+async function autoUpdateGold(){const p=await fetchGoldPrice();if(p){GOLD_PRICE=p;const c=gc();c.goldPrice=p;sc(c);refreshHome()}}
+async function manualRefreshGold(){
+  const btn=document.getElementById('goldRefBtn');if(btn)btn.textContent='更新中...';
+  const p=await fetchGoldPrice();
+  if(p){GOLD_PRICE=p;const c=gc();c.goldPrice=p;sc(c);refreshStats();if(btn)btn.textContent='✓ 已更新'}
+  else{if(btn)btn.textContent='更新失败'}
+  setTimeout(()=>{if(btn)btn.textContent='刷新金价'},2000);
+}
+
+function go(n,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const id=n==='profile'?'pageProfile':n==='stats'?'pageStats':'pageHome';
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  if(n==='stats')refreshStats();if(n==='profile')loadCfg();if(n==='home')refreshHome();
+  document.querySelector('.page-wrap').scrollTop=0;
+}
+
+// HOME
+function refreshHome(){renderChips();updMeme();updHomeStats()}
+function renderChips(){
+  const a=acts(),box=document.getElementById('chipBox');box.innerHTML='';
+  a.forEach((x,i)=>{const d=document.createElement('div');d.className='chip'+(i===S.selAct?' on':'');d.textContent=x.emoji+' '+x.name;d.onclick=()=>{S.selAct=i;renderChips()};box.appendChild(d)});
+}
+function updMeme(){
+  const recs=gr(),td=tds(),tr=recs.filter(r=>localDate(r.date)===td);
+  const min=tr.reduce((s,r)=>s+r.seconds,0)/60,money=tr.reduce((s,r)=>s+r.money,0),cnt=tr.length;
+  const m=meme(min,cnt,money);
+  document.getElementById('mT').textContent=m.text;document.getElementById('mS').textContent=m.sub;
+}
+function meme(min,cnt,money){
+  if(!cnt)return{text:'今天还没开始摸鱼哦',sub:'选个摸鱼姿势，开始你的快乐之旅'};
+  if(min<3)return{text:'就这？连热身都不算',sub:`${min.toFixed(0)}分钟，连鱼的毛都没摸到`};
+  if(min<5)return{text:'刚刚小摸了一下',sub:`才${min.toFixed(0)}分钟，这不叫摸鱼，这叫战略性休息`};
+  if(min<10)return{text:'摸了，但没完全摸',sub:`${min.toFixed(0)}分钟，老板的雷达还没扫到你`};
+  if(min<15)return{text:'初级摸鱼，谨慎试探',sub:`已赚¥${money.toFixed(1)}，你的胆子在慢慢变大`};
+  if(min<20)return{text:'摸鱼小能手已上线',sub:`${min.toFixed(0)}分钟到手¥${money.toFixed(1)}，血赚不亏`};
+  if(min<30)return{text:'你已进入摸鱼心流',sub:'工位上的你看似在思考，实则灵魂出窍'};
+  if(min<45)return{text:'悄悄摸鱼不出声',sub:`今天已摸${cnt}次，节奏把控得很好`};
+  if(min<60)return{text:'半小时了，稳住',sub:'老板路过你假装在debug，但你什么都没写'};
+  if(min<90)return{text:'一小时档位，渐入佳境',sub:'同事以为你在深度思考，其实你在深度摆烂'};
+  if(min<120)return{text:'你的工位在哭泣',sub:`到手¥${money.toFixed(1)}，效率超越99%打工人`};
+  if(min<150)return{text:'两小时！已有职业素养',sub:'你摸鱼摸出了哲学的味道'};
+  if(min<180)return{text:'老板：这人今天干活了吗',sub:`已摸${min.toFixed(0)}分钟，建议竞选「首席摸鱼官」`};
+  if(min<210)return{text:'三小时，正式进阶大师',sub:'HR已读不回，IT正在查你的浏览记录'};
+  if(min<240)return{text:'摸鱼界的王者驾到',sub:'同事开始怀疑你是不是已经提了离职'};
+  if(min<280)return{text:'你是来上班还是来旅游的',sub:`¥${money.toFixed(1)}到手，你就是行走的人形BUG`};
+  if(min<320)return{text:'不是在上班，是在上坟',sub:'建议公司给你发「精神离职」证书'};
+  if(min<360)return{text:'工作是不可能工作的',sub:'这辈子都不可能工作的，摸鱼才能维持生活'};
+  if(min<400)return{text:'你已经不需要工位了',sub:'你的肉身在公司，灵魂在马尔代夫'};
+  if(min<440)return{text:'摸鱼界の传说！已封神',sub:'建议辞职创办「摸鱼大学」，你就是校长'};
+  if(min<480)return{text:'全天候摸鱼，无死角覆盖',sub:`今日带薪产出¥${money.toFixed(1)}，属于是躺赚了`};
+  if(min<540)return{text:'你已不属于这个次元',sub:'时间对你而言只是数字，你已实现带薪自由'};
+  if(min<600)return{text:'摸鱼十小时，创造历史',sub:'你的事迹将被写入《摸鱼名人堂》'};
+  return{text:'这已经不是摸鱼了，这是行为艺术',sub:'你用生命在诠释「在岗不在职」的至高境界'};
+}
+function updHomeStats(){
+  const recs=gr(),td=tds(),tr=recs.filter(r=>localDate(r.date)===td);
+  const money=tr.reduce((s,r)=>s+r.money,0),sec=tr.reduce((s,r)=>s+r.seconds,0);
+  document.getElementById('hMoney').innerHTML=money.toFixed(1)+'<span class="tu">元</span>';
+  document.getElementById('hTime').innerHTML=Math.round(sec/60)+'<span class="tu">分</span>';
+  document.getElementById('hGold').innerHTML=(money>0?fmtGold(money):'0')+'<span class="tu">g</span>';
+  // act stats
+  const box=document.getElementById('actStats');
+  if(!tr.length){box.innerHTML='';box.style.display='none';return}
+  const am={};tr.forEach(r=>{const k=r.activity||'摸鱼';if(!am[k])am[k]={emoji:r.emoji||'🐟',sec:0};am[k].sec+=r.seconds});
+  const al=Object.entries(am).sort((a,b)=>b[1].sec-a[1].sec);
+  const maxS=al[0][1].sec;
+  let h='<div class="act-stats-title">今日摸鱼姿势统计</div><div class="act-stats-list">';
+  al.forEach(([name,d])=>{
+    const pct=Math.round(d.sec/maxS*100);
+    h+=`<div class="act-stat-row"><span class="asr-emoji">${d.emoji}</span><span class="asr-name">${name}</span><div class="asr-bar"><div class="asr-fill" style="width:${pct}%"></div></div><span class="asr-dur">${fmtD(d.sec)}</span></div>`;
+  });
+  h+='</div>';
+  box.innerHTML=h;box.style.display='';
+}
+
+// TIMER
+function toggle(){if(!S.running){const c=gc();if(!c.salary||parseFloat(c.salary)<=0){go('profile',document.querySelectorAll('.tab-item')[2]);document.getElementById('cfgSal').focus();return}startT()}else stopT()}
+function startT(){
+  S.running=true;S.start=Date.now();
+  document.getElementById('mainBtn').textContent='结束摸鱼';document.getElementById('mainBtn').className='btn btn-end';
+  document.getElementById('timerCard').style.display='block';
+  const a=acts(),act=a[S.selAct]||a[0];
+  document.getElementById('actLbl').textContent=act.emoji+' '+act.name+'中... '+(act.pct||100)+'%';
+  S.ti=setInterval(updT,50);S.ci=setInterval(coin,700);
+}
+function stopT(){
+  S.running=false;clearInterval(S.ti);clearInterval(S.ci);
+  const el=(Date.now()-S.start)/1000,rate=hr(),a=acts(),act=a[S.selAct]||a[0],pct=(act.pct||100)/100,money=(rate/3600)*el*pct;
+  const recs=gr();recs.push({date:new Date().toISOString(),seconds:el,money,activity:act.name,emoji:act.emoji,pct:act.pct||100});sr(recs);
+  document.getElementById('mainBtn').textContent='开始摸鱼';document.getElementById('mainBtn').className='btn btn-go';
+  document.getElementById('actLbl').textContent='';document.getElementById('goldLive').textContent='';
+  document.getElementById('timerCard').style.display='none';
+  updMeme();updHomeStats();showToast();
+}
+function updT(){
+  const el=(Date.now()-S.start)/1000,rate=hr(),a=acts(),act=a[S.selAct]||a[0],pct=(act.pct||100)/100,money=(rate/3600)*el*pct;
+  const e=document.getElementById('moneyDisp');e.textContent=money.toFixed(2);
+  if(Math.floor(money*100)!==e._l){e.classList.add('bump');setTimeout(()=>e.classList.remove('bump'),100);e._l=Math.floor(money*100)}
+  document.getElementById('goldLive').textContent=`≈ ${fmtGold(money)}g 黄金`;
+  const h=Math.floor(el/3600),m=Math.floor((el%3600)/60),s=Math.floor(el%60);
+  document.getElementById('timeDisp').textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function coin(){const b=document.getElementById('coinBox'),c=document.createElement('span');c.className='cf';c.textContent=['💰','🪙','💵','✨','⭐'][Math.floor(Math.random()*5)];c.style.left=Math.random()*90+'%';b.appendChild(c);setTimeout(()=>c.remove(),1300)}
+
+const TOASTS=[
+  {emoji:'🫡',text:'这班，您还要亲自上吗？',sub:'建议让工资自己去赚'},
+  {emoji:'🐟',text:'鱼已摸完，请签收',sub:'下次记得摸久一点'},
+  {emoji:'🏖️',text:'精神已到达马尔代夫',sub:'肉身还在工位上苟着'},
+  {emoji:'💼',text:'工作和你，总要辜负一个',sub:'你选择了正确的那个'},
+  {emoji:'🎭',text:'今天的班，演得不错',sub:'给自己的表演打个分吧'},
+  {emoji:'🧘',text:'摸鱼结束，灵魂归位',sub:'假装没有摸过的样子'},
+  {emoji:'☕',text:'辛苦了，摸鱼也是体力活',sub:'建议你喝杯咖啡犒劳自己'},
+  {emoji:'🪙',text:'又一笔净收入到账',sub:'人在工位坐，钱从天上来'},
+  {emoji:'🦥',text:'树懒看了都自愧不如',sub:'你重新定义了「慢节奏」'},
+  {emoji:'🎪',text:'本次演出到此结束',sub:'观众朋友们下次再见'},
+  {emoji:'📊',text:'恭喜你，KPI又水了一天',sub:'但你的摸鱼KPI超额完成'},
+  {emoji:'🛸',text:'灵魂刚从外太空回来',sub:'身体一直替你值班呢'},
+  {emoji:'🧑‍💻',text:'电脑屏幕以为你在加班',sub:'只有你知道真相'},
+  {emoji:'🐱',text:'连猫都比你忙',sub:'但你比猫活得通透'},
+  {emoji:'🏆',text:'今日摸鱼，圆满收官',sub:'期待你明天的精彩表演'},
+];
+function showToast(money,sec){
+  const t=TOASTS[Math.floor(Math.random()*TOASTS.length)];
+  document.getElementById('toastEmoji').textContent=t.emoji;
+  document.getElementById('toastText').textContent=t.text;
+  document.getElementById('toastSub').textContent=t.sub;
+  document.getElementById('toastOv').classList.add('show');
+}
+function closeToast(){document.getElementById('toastOv').classList.remove('show')}
+
+function addManual(){
+  const c=gc();if(!c.salary||parseFloat(c.salary)<=0){go('profile',document.querySelectorAll('.tab-item')[2]);return}
+  const h=parseInt(document.getElementById('manH').value)||0,m=parseInt(document.getElementById('manM').value)||0,s=parseInt(document.getElementById('manS').value)||0;
+  const ts=h*3600+m*60+s;if(ts<=0)return;
+  const rate=hr(),a=acts(),act=a[S.selAct]||a[0],pct=(act.pct||100)/100,money=(rate/3600)*ts*pct;
+  const recs=gr();recs.push({date:new Date().toISOString(),seconds:ts,money,activity:act.name,emoji:act.emoji,pct:act.pct||100});sr(recs);
+  document.getElementById('manH').value='';document.getElementById('manM').value='';document.getElementById('manS').value='';
+  updMeme();updHomeStats();
+}
+
+// STATS
+function refreshStats(){
+  const recs=gr(),now=new Date(),y=now.getFullYear().toString();
+  const yr=recs.filter(r=>localYear(r.date)===y);
+  const ym=yr.reduce((s,r)=>s+r.money,0),ys=yr.reduce((s,r)=>s+r.seconds,0);
+  document.getElementById('yrTitle').textContent=y+'年度摸鱼总览';
+  let rowHtml=`<div class="yi"><div class="yv">${ym.toFixed(1)}</div><div class="yl">金额(元)</div></div>`;
+  rowHtml+=`<div class="yi"><div class="yv">${Math.round(ys/60)}</div><div class="yl">时长(分)</div></div>`;
+  rowHtml+=`<div class="yi"><div class="yv">${yr.length}</div><div class="yl">次数</div></div>`;
+  rowHtml+=`<div class="yi"><div class="yv gold">${fmtGold(ym)}</div><div class="yl">克黄金 <button class="gold-refresh" id="goldRefBtn" onclick="manualRefreshGold()">刷新金价</button></div></div>`;
+  document.getElementById('yrRow').innerHTML=rowHtml;
+  renderCal();renderDay();renderCharts();
+}
+function monthMeme(money,min,cnt){
+  if(!cnt)return'';
+  if(money<10)return'本月摸鱼纯属意念摸鱼';
+  if(money<50)return'浅摸了一下，不失礼貌的摸';
+  if(money<100)return'摸得不多，但胜在心诚';
+  if(money<300)return'已经摸出了职业素养';
+  if(money<500)return'你的工位只是个摆设吧';
+  if(money<1000)return'这个月班味很淡，摸味很浓';
+  if(money<2000)return'建议公司查一下你的工位使用率';
+  if(money<5000)return'你不是在摸鱼，鱼在摸你';
+  if(money<10000)return'本月最佳带薪表演艺术家';
+  return'你已经不是在上班了，你是在表演上班';
+}
+function renderCal(){
+  const recs=gr(),y=S.calY,m=S.calM;
+  document.getElementById('calTitle').textContent=`${y}年${m+1}月`;
+  const mk=`${y}-${String(m+1).padStart(2,'0')}`;
+  const mr=recs.filter(r=>localYM(r.date)===mk);
+  const mm=mr.reduce((s,r)=>s+r.money,0),ms=mr.reduce((s,r)=>s+r.seconds,0);
+  let sumHtml='';
+  if(mr.length){
+    sumHtml=`本月 <b>¥${mm.toFixed(1)}</b> · <b>${Math.round(ms/60)}分钟</b> · ${mr.length}次`;
+    sumHtml+=`<br><span class="mg"><b>${fmtGold(mm)}</b> 克黄金</span>`;
+  }else{sumHtml='本月暂无摸鱼记录'}
+  document.getElementById('monthSum').innerHTML=sumHtml;
+  document.getElementById('monthMeme').textContent=monthMeme(mm,ms/60,mr.length);
+  const fd=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),td=tds();
+  const dmap={};mr.forEach(r=>{const day=localDay(r.date);dmap[day]=(dmap[day]||0)+r.money});
+  const box=document.getElementById('calDays');box.innerHTML='';
+  for(let i=0;i<fd;i++){const d=document.createElement('div');d.className='cdi emp';box.appendChild(d)}
+  for(let d=1;d<=dim;d++){
+    const el=document.createElement('div');el.className='cdi';
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    let inner='';
+    if(dmap[d]){
+      const v=dmap[d];
+      inner+=`<span class="cd-money">¥${v>=10?v.toFixed(0):v.toFixed(1)}</span>`;
+    }
+    inner+=`<span class="cd-day">${d}</span>`;
+    el.innerHTML=inner;
+    if(ds===td)el.classList.add('tod');if(ds===S.selDate)el.classList.add('sel');
+    el.onclick=()=>{S.selDate=ds;renderCal();renderDay()};
+    box.appendChild(el);
+  }
+}
+function calPrev(){S.calM--;if(S.calM<0){S.calM=11;S.calY--}refreshStats()}
+function calNext(){S.calM++;if(S.calM>11){S.calM=0;S.calY++}refreshStats()}
+function renderDay(){
+  const recs=gr(),dr=recs.filter(r=>localDate(r.date)===S.selDate);
+  const box=document.getElementById('dayBox');
+  const dt=new Date(S.selDate+'T00:00:00'),dl=`${dt.getMonth()+1}月${dt.getDate()}日`;
+  if(!dr.length){box.innerHTML=`<div class="dd-title">${dl}</div><div class="no-rec">这天没有摸鱼记录</div>`;return}
+  let h=`<div class="dd-title">${dl} · ${dr.length}次摸鱼</div>`;
+  dr.forEach(r=>{const t=new Date(r.date),ts=`${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+    h+=`<div class="dr"><div class="di">${r.emoji||'🐟'}</div><div class="df"><div class="dn">${r.activity||'摸鱼'}${r.pct&&r.pct<100?' <span class="pct-tag">'+r.pct+'%</span>':''}</div><div class="dt">${ts} · ${fmtD(r.seconds)}</div></div><div class="dm"><div class="dv">¥${r.money.toFixed(2)}</div><div class="dg">${fmtGold(r.money)}g</div></div></div>`});
+  box.innerHTML=h;
+}
+function fmtD(s){if(s<60)return Math.round(s)+'秒';if(s<3600)return Math.round(s/60)+'分钟';return Math.floor(s/3600)+'时'+Math.round((s%3600)/60)+'分'}
+
+function renderCharts(){
+  const recs=gr(),y=S.calY,m=S.calM;
+  const mk=`${y}-${String(m+1).padStart(2,'0')}`;
+  const mr=recs.filter(r=>localYM(r.date)===mk);
+  const box=document.getElementById('chartsBox');
+  if(!mr.length){box.innerHTML='';return}
+
+  // Activity horizontal bar chart
+  const actMap={};
+  mr.forEach(r=>{const k=(r.emoji||'🐟')+' '+(r.activity||'摸鱼');actMap[k]=(actMap[k]||0)+r.money});
+  const actList=Object.entries(actMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxA=actList.length?actList[0][1]:1;
+
+  let actHtml='<div class="chart-card"><div class="chart-title">本月摸鱼姿势排行</div><div class="hbar-list">';
+  actList.forEach(([name,val])=>{
+    const pct=Math.round(val/maxA*100);
+    actHtml+=`<div class="hbar-item"><span class="hb-name">${name}</span>`;
+    actHtml+=`<div class="hb-track"><div class="hb-fill" style="width:${pct}%"></div></div>`;
+    actHtml+=`<span class="hb-val">¥${val.toFixed(1)}</span></div>`;
+  });
+  actHtml+='</div></div>';
+
+  // 3. Time-of-day heatmap
+  const hours=Array(24).fill(0);
+  mr.forEach(r=>{const h=localHour(r.date);hours[h]+=r.money});
+  const maxH=Math.max(...hours,0.01);
+  const timeLabels=['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
+
+  let timeHtml='<div class="chart-card"><div class="chart-title">本月摸鱼时段热力图</div><div class="time-grid">';
+  timeLabels.forEach((lbl,i)=>{
+    const v=hours[i],intensity=v/maxH;
+    let bg='rgba(99,102,241,0.04)';
+    if(intensity>0.8)bg='rgba(99,102,241,0.55)';
+    else if(intensity>0.5)bg='rgba(99,102,241,0.35)';
+    else if(intensity>0.2)bg='rgba(99,102,241,0.2)';
+    else if(intensity>0)bg='rgba(99,102,241,0.1)';
+    const fc=intensity>0.5?'#fff':'var(--text3)';
+    timeHtml+=`<div class="time-cell" style="background:${bg};color:${fc}"><span class="tc-lbl">${lbl}时</span></div>`;
+  });
+  timeHtml+='</div></div>';
+
+  box.innerHTML=actHtml+timeHtml;
+}
+
+// PROFILE
+function loadCfg(){
+  const c=gc();document.getElementById('cfgSal').value=c.salary||'';
+  document.getElementById('cfgDays').value=c.workDays||22;document.getElementById('cfgHrs').value=c.workHours||8;
+  updHints();renderAch();
+}
+function saveCfg(){const c=gc();c.salary=document.getElementById('cfgSal').value;c.workDays=document.getElementById('cfgDays').value;c.workHours=document.getElementById('cfgHrs').value;sc(c);updHints()}
+function salHintText(sal){if(!sal)return'';if(sal<3000)return'吃土中';if(sal<5000)return'勉强糊口';if(sal<8000)return'标准打工人';if(sal<12000)return'还凑合吧';if(sal<20000)return'摸鱼都赚的多';if(sal<35000)return'摸鱼好贵哦';if(sal<50000)return'大佬带带我';if(sal<100000)return'别摸了去工作';return'您呼吸都在赚钱'}
+function dayHintText(days){if(days<=10)return'什么神仙工作！';if(days<=15)return'美美养老局';if(days<=20)return'有双休真好';if(days<=22)return'标准社畜';if(days<=24)return'单休战士';if(days<=26)return'已经很卷了';return'你是老板吧？'}
+function hrHintText(hrs){if(hrs<=5)return'人间理想啊';if(hrs<=6)return'养生达人';if(hrs<=7.5)return'准点跑路！';if(hrs<=8)return'朝九晚五人';if(hrs<=9)return'小小加班';if(hrs<=10)return'995预备役';if(hrs<=12)return'经典996';return'007战士'}
+function updHints(){
+  const sal=parseFloat(document.getElementById('cfgSal').value)||0;
+  const days=parseFloat(document.getElementById('cfgDays').value)||22;
+  const hrs=parseFloat(document.getElementById('cfgHrs').value)||8;
+  document.getElementById('salHint').textContent=salHintText(sal);
+  document.getElementById('dayHint').textContent=dayHintText(days);
+  document.getElementById('hrHint').textContent=hrHintText(hrs);
+}
+function renderAch(){
+  const recs=gr();
+  const unlocked=[],locked=[];
+  ACHIEVEMENTS.forEach(a=>{(a.check(recs)?unlocked:locked).push(a)});
+  const uBox=document.getElementById('achUnlocked'),lBox=document.getElementById('achLocked');
+  const noU=document.getElementById('achNoUnlock'),tog=document.getElementById('achToggle');
+  if(unlocked.length){
+    noU.style.display='none';
+    uBox.innerHTML=unlocked.map(a=>`<div class="ach unlocked"><span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}</span><span class="ach-desc">${a.desc}</span></div></div>`).join('');
+  }else{noU.style.display='block';uBox.innerHTML=''}
+  if(locked.length){
+    tog.style.display='flex';
+    lBox.innerHTML=locked.map(a=>`<div class="ach"><span class="ach-icon">${a.icon}</span><div class="ach-info"><span class="ach-name">${a.name}</span><span class="ach-desc">${a.desc}</span></div></div>`).join('');
+  }else{tog.style.display='none';lBox.innerHTML=''}
+}
+function toggleLocked(){
+  const wrap=document.getElementById('achLockedWrap'),arrow=document.getElementById('achArrow'),txt=document.getElementById('achToggleText');
+  const open=wrap.classList.toggle('show');
+  arrow.classList.toggle('open',open);
+  txt.textContent=open?'收起未解锁':'查看未解锁';
+}
+function getUnlockedAch(){return ACHIEVEMENTS.filter(a=>a.check(gr()))}
+
+// ACTIVITY
+function openActModal(){document.getElementById('actMo').classList.add('show');document.body.style.overflow='hidden';renderMoAct()}
+function closeActModal(){document.getElementById('actMo').classList.remove('show');document.body.style.overflow='';renderChips()}
+function renderMoAct(){
+  const a=acts(),box=document.getElementById('moActList');box.innerHTML='';
+  a.forEach((x,i)=>{const d=document.createElement('div');d.className='ali';d.innerHTML=`<span class="ae">${x.emoji}</span><span class="an">${x.name}</span><input type="number" class="ap" value="${x.pct||100}" min="1" max="100" onchange="updActPct(${i},this.value)"><span class="ap-s">%</span><button class="ad" onclick="rmActMo(${i})">&times;</button>`;box.appendChild(d)});
+}
+function rmActMo(i){const c=gc(),a=c.activities||[...DEF_ACT];a.splice(i,1);c.activities=a;sc(c);if(S.selAct>=a.length)S.selAct=0;renderMoAct()}
+function updActPct(i,v){const c=gc(),a=c.activities||[...DEF_ACT];const p=Math.min(100,Math.max(1,parseInt(v)||100));a[i].pct=p;c.activities=a;sc(c)}
+function addActMo(){
+  const e=document.getElementById('moE').value.trim()||'🐟',n=document.getElementById('moN').value.trim();if(!n)return;
+  const p=Math.min(100,Math.max(1,parseInt(document.getElementById('moP').value)||100));
+  const c=gc(),a=c.activities||[...DEF_ACT];a.push({emoji:e,name:n,pct:p});c.activities=a;sc(c);
+  document.getElementById('moE').value='';document.getElementById('moN').value='';document.getElementById('moP').value='100';renderMoAct();
+}
+function clearAll(){if(confirm('确定要清除所有摸鱼记录吗？')){localStorage.removeItem(RK);refreshHome();refreshStats()}}
+
+// Welcome
+function closeWelcome(){document.getElementById('welcomeOv').classList.remove('show')}
+function saveWelcome(){
+  const sal=document.getElementById('welSal').value,days=document.getElementById('welDays').value,hrs=document.getElementById('welHrs').value;
+  const c=gc();if(sal)c.salary=sal;c.workDays=days||'22';c.workHours=hrs||'8';sc(c);
+  closeWelcome();loadCfg();refreshHome();
+}
+function showWelcome(){const c=gc();if(!c.salary){document.getElementById('welcomeOv').classList.add('show')}}
+function updWelHints(){
+  document.getElementById('welSalH').textContent=salHintText(parseFloat(document.getElementById('welSal').value)||0);
+  document.getElementById('welDayH').textContent=dayHintText(parseFloat(document.getElementById('welDays').value)||22);
+  document.getElementById('welHrH').textContent=hrHintText(parseFloat(document.getElementById('welHrs').value)||8);
+}
+
+// SHARE
+function genShare(){
+  const recs=gr(),now=new Date(),td=tds(),tr=recs.filter(r=>localDate(r.date)===td);
+  const totalM=tr.reduce((s,r)=>s+r.money,0),totalS=tr.reduce((s,r)=>s+r.seconds,0),cnt=tr.length;
+  const m=meme(totalS/60,cnt,totalM);
+  const am={};tr.forEach(r=>{const k=(r.emoji||'🐟')+' '+(r.activity||'摸鱼');if(!am[k])am[k]={c:0,s:0,m:0,pct:r.pct||100};am[k].c++;am[k].s+=r.seconds;am[k].m+=r.money});
+  const al=Object.entries(am).sort((a,b)=>b[1].m-a[1].m).slice(0,3);
+  const ua=getUnlockedAch().slice(0,4);
+  const w=400,pad=30,cw=w-pad*2,dpr=2;
+  const cvs=document.getElementById('cvs');
+  const dateStr=now.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+
+  function render(ctx,dry){
+    let y=0;
+    const cx=w/2;
+
+    // ── Date ──
+    y+=50;
+    ctx.font='11px "PingFang SC",sans-serif';
+    if(!dry){ctx.textAlign='center';ctx.fillStyle='#9990b0';ctx.fillText(dateStr,cx,y)}
+
+    // ── Title ──
+    y+=48;
+    ctx.font='bold 24px "PingFang SC","SF Pro Display",sans-serif';
+    if(!dry){ctx.fillStyle='#1e1b4b';ctx.textAlign='center'}
+    y=dry?y+measureWrap(ctx,`「${m.text}」`,cw,30):wt(ctx,`「${m.text}」`,cx,y,cw,30);
+
+    // ── Subtitle ──
+    y+=28;
+    ctx.font='13px "PingFang SC",sans-serif';
+    if(!dry){ctx.fillStyle='#5b5675';ctx.textAlign='center'}
+    y=dry?y+measureWrap(ctx,m.sub,cw,19):wt(ctx,m.sub,cx,y,cw,19);
+
+    // ── 净摸值 label ──
+    y+=50;
+    const nLabel='今日净摸值';const nSub='「已按摸鱼纯度折算」';
+    ctx.font='bold 16px "PingFang SC","SF Pro Display",sans-serif';
+    if(!dry){
+      const lw=ctx.measureText(nLabel).width;
+      ctx.font='13px "PingFang SC",sans-serif';const sw2=ctx.measureText(nSub).width;
+      const tw=lw+6+sw2,sx=cx-tw/2;
+      ctx.font='bold 16px "PingFang SC","SF Pro Display",sans-serif';ctx.fillStyle='#1e1b4b';ctx.textAlign='left';
+      ctx.fillText(nLabel,sx,y);
+      ctx.font='13px "PingFang SC",sans-serif';ctx.fillStyle='#9990b0';
+      ctx.fillText(nSub,sx+lw+6,y);
+    }
+
+    // ── Gold (main) ──
+    y+=56;
+    ctx.font='bold 13px "PingFang SC",sans-serif';
+    const goldNum=fmtGold(totalM);
+    if(!dry){
+      ctx.textAlign='center';
+      const numW=(() => { ctx.font='bold 52px "PingFang SC","SF Pro Display",sans-serif'; return ctx.measureText(goldNum).width })();
+      const unitW=(() => { ctx.font='bold 18px "PingFang SC",sans-serif'; return ctx.measureText(' 克黄金').width })();
+      const totalW=22+numW+unitW;
+      const startX=cx-totalW/2;
+      ctx.fillStyle='#d4a017';rr(ctx,startX,y-16,18,13,2);ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fillRect(startX+2,y-15,14,4);
+      ctx.fillStyle='#b8860b';ctx.font='bold 52px "PingFang SC","SF Pro Display",sans-serif';
+      ctx.textAlign='left';ctx.fillText(goldNum,startX+22,y);
+      ctx.font='bold 18px "PingFang SC",sans-serif';ctx.fillStyle='#d4a017';
+      ctx.fillText(' 克黄金',startX+22+numW,y);
+    }
+
+    // ── Amount (secondary) ──
+    y+=36;
+    if(!dry){ctx.textAlign='center';ctx.fillStyle='#4b5563';ctx.font='bold 20px "PingFang SC","SF Pro Display",sans-serif';ctx.fillText(`¥${totalM.toFixed(2)}`,cx,y)}
+
+    // ── Divider ──
+    y+=48;
+    if(!dry){
+      const g=ctx.createLinearGradient(pad+40,0,w-pad-40,0);
+      g.addColorStop(0,'rgba(148,163,184,0)');g.addColorStop(0.5,'rgba(148,163,184,0.25)');g.addColorStop(1,'rgba(148,163,184,0)');
+      ctx.strokeStyle=g;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad+40,y);ctx.lineTo(w-pad-40,y);ctx.stroke();
+    }
+
+    // ── Stats row ──
+    y+=34;
+    const stats=[{l:'摸鱼次数',v:cnt+'次'},{l:'总时长',v:fmtD(totalS)}];
+    const sw=cw/2;
+    if(!dry){
+      stats.forEach((s,i)=>{
+        const x=pad+sw*i+sw/2;
+        ctx.textAlign='center';
+        ctx.fillStyle='#1e1b4b';ctx.font='bold 18px "PingFang SC",sans-serif';ctx.fillText(s.v,x,y);
+        ctx.fillStyle='#9990b0';ctx.font='10px "PingFang SC",sans-serif';ctx.fillText(s.l,x,y+18);
+      });
+    }
+    y+=30;
+
+    // ── Activities ──
+    if(al.length>0){
+      y+=24;
+      ctx.font='bold 11px "PingFang SC",sans-serif';
+      if(!dry){ctx.textAlign='left';ctx.fillStyle='#9990b0';ctx.fillText('— 摸鱼姿势 —',cx-ctx.measureText('— 摸鱼姿势 —').width/2,y)}
+      y+=18;
+      al.forEach(a=>{
+        if(!dry){
+          ctx.fillStyle='rgba(255,255,255,0.35)';rr(ctx,pad,y,cw,40,12);ctx.fill();
+          ctx.textAlign='left';ctx.fillStyle='#1e1b4b';ctx.font='14px "PingFang SC",sans-serif';
+          ctx.fillText(a[0],pad+14,y+26);
+          ctx.textAlign='right';ctx.fillStyle='#6366f1';ctx.font='bold 14px "PingFang SC",sans-serif';
+          ctx.fillText(`¥${a[1].m.toFixed(1)} · ${a[1].c}次`,w-pad-14,y+26);
+        }
+        y+=50;
+      });
+    }
+
+    // ── Achievements (2 cols with desc) ──
+    if(ua.length>0){
+      y+=20;
+      ctx.font='bold 11px "PingFang SC",sans-serif';
+      if(!dry){ctx.textAlign='left';ctx.fillStyle='#9990b0';const lbl='— 已解锁成就 —';ctx.fillText(lbl,cx-ctx.measureText(lbl).width/2,y)}
+      y+=18;
+      const cols=2,gap=10,aw=(cw-gap)/cols,ah=52;
+      ua.forEach((a,i)=>{
+        const col=i%cols,row=Math.floor(i/cols);
+        const ax=pad+col*(aw+gap),ay=y+row*(ah+8);
+        if(!dry){
+          ctx.fillStyle='rgba(251,191,36,0.08)';rr(ctx,ax,ay,aw,ah,10);ctx.fill();
+          ctx.strokeStyle='rgba(251,191,36,0.2)';ctx.lineWidth=0.5;rr(ctx,ax,ay,aw,ah,10);ctx.stroke();
+          ctx.textAlign='left';
+          ctx.font='18px "Apple Color Emoji","Segoe UI Emoji",serif';ctx.fillStyle='#1e1b4b';
+          ctx.fillText(a.icon,ax+8,ay+24);
+          ctx.font='bold 12px "PingFang SC",sans-serif';ctx.fillStyle='#1e1b4b';
+          ctx.fillText(a.name,ax+32,ay+22);
+          ctx.font='10px "PingFang SC",sans-serif';ctx.fillStyle='#7c7494';
+          ctx.fillText(a.desc,ax+32,ay+40);
+        }
+      });
+      y+=Math.ceil(ua.length/cols)*(ah+8);
+    }
+
+    y+=50;
+    return y;
+  }
+
+  // Pass 1: measure
+  cvs.width=w*dpr;cvs.height=1200*dpr;
+  let ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
+  const h=Math.max(render(ctx,true),500);
+
+  // Pass 2: draw
+  ctx.setTransform(1,0,0,1,0,0);
+  cvs.width=w*dpr;cvs.height=h*dpr;
+  ctx=cvs.getContext('2d');ctx.scale(dpr,dpr);
+
+  // BG
+  const bg=ctx.createLinearGradient(0,0,w*0.3,h);
+  bg.addColorStop(0,'#eee8f8');bg.addColorStop(0.5,'#e8e2f4');bg.addColorStop(1,'#e4e0f6');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='rgba(167,139,250,0.06)';ctx.beginPath();ctx.arc(50,80,100,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(251,191,36,0.04)';ctx.beginPath();ctx.arc(w-30,h*0.45,90,0,Math.PI*2);ctx.fill();
+
+  render(ctx,false);
+
+  ctx.textAlign='center';ctx.fillStyle='#b0a8c8';ctx.font='10px "PingFang SC",sans-serif';
+  ctx.fillText('带薪摸鱼计算器 · 认真摸鱼，快乐赚钱',w/2,h-16);
+
+  const url=cvs.toDataURL('image/png');
+  document.getElementById('shareImg').src=url;
+  document.getElementById('shareOv').classList.add('show');
+  const lk=document.createElement('a');lk.download=`摸鱼战报_${td}.png`;lk.href=url;lk.click();
+}
+function measureWrap(ctx,text,maxW,lh){let line='',lines=1;for(const ch of text){const t=line+ch;if(ctx.measureText(t).width>maxW&&line){line=ch;lines++}else line=t}return lines*lh}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath()}
+function wt(ctx,text,x,y,maxW,lh){let line='';for(const ch of text){const t=line+ch;if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);line=ch;y+=lh}else line=t}ctx.fillText(line,x,y);return y}
+
+(function(){const c=gc();if(c.conversions){const g=c.conversions.find(x=>x.name==='黄金');if(g&&g.price){c.goldPrice=g.price;GOLD_PRICE=g.price}delete c.conversions;sc(c)}if(c.goldPrice)GOLD_PRICE=c.goldPrice;
+  // migrate: ensure 12 default activities + pct field
+  const a=c.activities;if(a){const names=new Set(a.map(x=>x.name));const toAdd=DEF_ACT.filter(x=>!names.has(x.name));if(toAdd.length)toAdd.forEach(x=>a.push(x));const defMap={};DEF_ACT.forEach(x=>defMap[x.name]=x.pct);let pctFixed=false;a.forEach(x=>{if(x.pct===undefined){x.pct=defMap[x.name]||100;pctFixed=true}});if(toAdd.length||pctFixed){c.activities=a;sc(c)}}
+  loadCfg();refreshHome();autoUpdateGold();setInterval(autoUpdateGold,30*60*1000);showWelcome();
+  // iOS keyboard: scroll active input into view after resize
+  if(window.visualViewport){
+    let pending=false;
+    window.visualViewport.addEventListener('resize',()=>{
+      if(pending)return;pending=true;
+      requestAnimationFrame(()=>{pending=false;
+        const el=document.activeElement;
+        if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA')){el.scrollIntoView({block:'center',behavior:'smooth'})}
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
