@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>作品集</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: #f2f2f7;
+    min-height: 100vh;
+    padding: 48px 16px 32px;
+    color: #1c1c1e;
+}
+h1 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    padding: 0 4px;
+}
+.subtitle {
+    font-size: 15px;
+    color: #8e8e93;
+    margin-bottom: 28px;
+    padding: 0 4px;
+}
+.section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 24px 0 8px 4px;
+}
+.card-list {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+a.item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 0.5px solid #e5e5ea;
+    transition: background 0.15s;
+    gap: 14px;
+}
+a.item:last-child { border-bottom: none; }
+a.item:active { background: #f2f2f7; }
+.icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+}
+.text { flex: 1; min-width: 0; }
+.item-title { font-size: 17px; font-weight: 500; }
+.item-desc { font-size: 13px; color: #8e8e93; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arrow { color: #c7c7cc; font-size: 18px; flex-shrink: 0; }
+
+.bg1 { background: #fde8e8; }
+.bg2 { background: #e8f0fd; }
+.bg3 { background: #fdf4e8; }
+.bg4 { background: #e8fde8; }
+.bg5 { background: #f0e8fd; }
+.bg6 { background: #fde8f0; }
+.bg7 { background: #e8fdfd; }
+.bg8 { background: #fdfde8; }
+</style>
+</head>
+<body>
+<h1>作品集</h1>
+<p class="subtitle">8 个互动 H5 小工具</p>
+
+<div class="section-title">测试 & 占卜</div>
+<div class="card-list">
+    <a class="item" href="drama-lover-test.html">
+        <div class="icon bg1">🎭</div>
+        <div class="text">
+            <div class="item-title">剧系恋人</div>
+            <div class="item-desc">测测你和哪位剧中角色最配</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+    <a class="item" href="jianghu-sign.html">
+        <div class="icon bg2">📜</div>
+        <div class="text">
+            <div class="item-title">每日江湖签</div>
+            <div class="item-desc">输入生辰八字，获取专属江湖签</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+    <a class="item" href="命运图谱.html">
+        <div class="icon bg5">🌌</div>
+        <div class="text">
+            <div class="item-title">命运图谱</div>
+            <div class="item-desc">探索你的命运走势</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+    <a class="item" href="职场前世测试.html">
+        <div class="icon bg3">🏯</div>
+        <div class="text">
+            <div class="item-title">职场前世测试</div>
+            <div class="item-desc">你的前世是什么职业？</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+</div>
+
+<div class="section-title">游戏 & 互动</div>
+<div class="card-list">
+    <a class="item" href="dao-dun-dog-game.html">
+        <div class="icon bg6">⚔️</div>
+        <div class="text">
+            <div class="item-title">刀盾狗大作战</div>
+            <div class="item-desc">砍障碍、揍敌人，越打越强！</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+    <a class="item" href="逆流鹅上.html">
+        <div class="icon bg4">🪿</div>
+        <div class="text">
+            <div class="item-title">逆流鹅上</div>
+            <div class="item-desc">鹅的逆流挑战</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+    <a class="item" href="天选之城.html">
+        <div class="icon bg7">🏙️</div>
+        <div class="text">
+            <div class="item-title">天选之城</div>
+            <div class="item-desc">测测哪座城市最适合你</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+</div>
+
+<div class="section-title">工具</div>
+<div class="card-list">
+    <a class="item" href="带薪摸鱼计算器.html">
+        <div class="icon bg8">💼</div>
+        <div class="text">
+            <div class="item-title">带薪摸鱼计算器</div>
+            <div class="item-desc">上班摸鱼到底值多少钱？</div>
+        </div>
+        <span class="arrow">›</span>
+    </a>
+</div>
+</body>
+</html>
