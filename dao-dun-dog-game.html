@@ -58,11 +58,13 @@ function showGameOver() {
 
 document.getElementById('startBtn').addEventListener('click', () => {
     showPlaying();
-    window.dispatchEvent(new CustomEvent('daodundog:startbtnclick'));
+    if (typeof getAudio === 'function') getAudio();
+    if (typeof initGame === 'function') { initGame(); running = true; }
+    if (typeof startLoop === 'function') startLoop();
 });
 document.getElementById('restartBtn').addEventListener('click', () => {
     showPlaying();
-    window.dispatchEvent(new CustomEvent('daodundog:restartbtnclick'));
+    if (typeof initGame === 'function') { initGame(); running = true; }
 });
 window.addEventListener('daodundog:gameover', showGameOver);
 window.addEventListener('daodundog:gamestart', showPlaying);
